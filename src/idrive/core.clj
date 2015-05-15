@@ -7,9 +7,6 @@
 
 (def files {"m4p" "BR3" "m4a" "BR3" "mp3" "BR4"})
 
-(defn negate [x]
-  (byte-array (map bit-not x)))
-
 (defn list-files [loc]
   (map #(io/file loc %) (.list (io/file loc))))
 
@@ -28,7 +25,7 @@
           (flatten
             (for [f (list-files loc)]
               (if (dir? f)
-                (list-files f)
+                (find-music f)
                 (if (music? f)
                   f))))))
 
@@ -45,22 +42,10 @@
         ext (files (last path))]
     (io/file l (str (apply str (butlast path)) "." ext))))
 
-(defn old-file [inf outf]
-  (with-open [in (io/input-stream inf)
-              out (io/output-stream outf)]
-    (let [buff (make-array Byte/TYPE 1024)]
-      (loop [l (.read in buff)
-             total 0]
-        (if (= l -1)
-          (println outf)
-          (do
-            (.write out (negate buff) 0 l)
-            (recur (.read in buff)
-                   (+ total l))))))))
-
 (defn negate-file [inf outf]
-  (.mkdirs (.getParentFile outf))
-  (old-file inf outf))
+  (println inf " --> " outf)
+  (.mkdirs (.getParentFile (io/file outf)))
+  (FileNegator/negate inf outf))
 
 (defn- get-folder-names [loc]
   (map #(.getName %) (filter dir? (list-files loc))))
